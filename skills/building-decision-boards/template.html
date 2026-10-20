@@ -1,0 +1,592 @@
+<meta charset="utf-8">
+<title>결정 대기함</title>
+<!-- title은 BOARD.title과 같게 바꾼다 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 글꼴: Pretendard. 발행 때 files로 fonts/PretendardVariable.woff2를 함께 올린다 */
+@font-face { font-family: "Pretendard Variable"; font-weight: 45 920; font-style: normal; font-display: swap;
+  src: url("fonts/PretendardVariable.woff2") format("woff2-variations"), url("fonts/PretendardVariable.woff2") format("woff2"); }
+/*
+  시안: 틀은 ui-ux-pro-max(Swiss Modernism 2.0 · 남색 + 금색 팔레트), 구현은 shadcn 토큰 구조와 컴포넌트 모양.
+  레이아웃(왼쪽 목록 + 결정 하나)과 스크립트는 원본 그대로이고, 아래 CSS만 바뀌었다.
+  색은 shadcn처럼 HSL 채널 토큰으로 두고 hsl(var(--x))로만 쓴다.
+*/
+:root {
+  --background: 210 40% 98%;          /* #F8FAFC */
+  --foreground: 222 47% 11%;          /* #0F172A */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --sidebar: 0 0% 100%;
+  --primary: 214 52% 25%;             /* #1E3A5F 남색 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 38% 94%;           /* #E9EEF5 */
+  --secondary-foreground: 214 52% 25%;
+  --muted: 215 38% 94%;
+  --muted-foreground: 215 19% 35%;    /* #475569 */
+  --accent: 214 40% 95%;              /* 마우스를 올렸을 때 배경 */
+  --accent-foreground: 222 47% 11%;
+  --border: 213 27% 84%;              /* #CBD5E1 */
+  --input: 215 16% 55%;              /* 입력·라디오 테두리: 카드 대비 3:1 이상 */
+  --ring: 214 52% 25%;
+  --selected: 214 60% 96%;            /* 고른 선택지 카드 배경(primary/5 대응) */
+  --warning: 26 90% 33%;              /* #B45309 계열 금색: 대기 상태 */
+  --warning-muted: 36 92% 94%;
+  --success: 214 52% 25%;
+  --success-muted: 214 45% 92%;
+  --codex: 262 52% 42%;
+  --codex-muted: 262 60% 95%;
+  --destructive: 0 72% 42%;
+  --radius: 0.625rem;
+  --font-body: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --dur: 150ms;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: 222 40% 7%;
+    --foreground: 210 40% 96%;
+    --card: 222 33% 11%;
+    --card-foreground: 210 40% 96%;
+    --sidebar: 222 35% 9%;
+    --primary: 211 75% 76%;
+    --primary-foreground: 222 47% 9%;
+    --secondary: 217 30% 18%;
+    --secondary-foreground: 211 75% 82%;
+    --muted: 217 30% 16%;
+    --muted-foreground: 215 20% 72%;
+    --accent: 217 30% 17%;
+    --accent-foreground: 210 40% 96%;
+    --border: 217 22% 24%;
+    --input: 215 16% 50%;
+    --ring: 211 75% 76%;
+    --selected: 214 40% 16%;
+    --warning: 36 90% 64%;
+    --warning-muted: 30 45% 15%;
+    --success: 211 75% 76%;
+    --success-muted: 214 40% 18%;
+    --codex: 262 85% 82%;
+    --codex-muted: 262 30% 20%;
+    --destructive: 0 85% 72%;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: 222 40% 7%;
+  --foreground: 210 40% 96%;
+  --card: 222 33% 11%;
+  --card-foreground: 210 40% 96%;
+  --sidebar: 222 35% 9%;
+  --primary: 211 75% 76%;
+  --primary-foreground: 222 47% 9%;
+  --secondary: 217 30% 18%;
+  --secondary-foreground: 211 75% 82%;
+  --muted: 217 30% 16%;
+  --muted-foreground: 215 20% 72%;
+  --accent: 217 30% 17%;
+  --accent-foreground: 210 40% 96%;
+  --border: 217 22% 24%;
+  --input: 215 16% 50%;
+  --ring: 211 75% 76%;
+  --selected: 214 40% 16%;
+  --warning: 36 90% 64%;
+  --warning-muted: 30 45% 15%;
+  --success: 211 75% 76%;
+  --success-muted: 214 40% 18%;
+  --codex: 262 85% 82%;
+  --codex-muted: 262 30% 20%;
+  --destructive: 0 85% 72%;
+}
+
+/* 기본 */
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: hsl(var(--background)); color: hsl(var(--foreground));
+  font-family: var(--font-body); font-size: 18px; line-height: 1.75;
+  word-break: keep-all; overflow-wrap: anywhere;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { margin: 0; line-height: 1.35; text-wrap: balance; color: hsl(var(--foreground)); }
+h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+@media (max-width: 600px) { h1 { font-size: 25px; } }
+p { margin: 0; }
+.mono { font-family: var(--font-mono); font-size: .86em; }
+
+/* 공통 포커스: 키보드로 이동할 때 눈에 띄는 링 */
+:where(button, textarea, summary, input):focus-visible {
+  outline: 2px solid hsl(var(--ring)); outline-offset: 2px;
+}
+
+/* 앱 틀: 왼쪽 목록(사이드바) + 오른쪽 결정 하나 */
+.app { height: 100%; display: grid; grid-template-columns: 300px minmax(0, 1fr); }
+@media (max-width: 860px) { .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); } }
+
+/* 사이드바 (shadcn Sidebar + SidebarMenuButton 모양) */
+.rail {
+  min-width: 0; background: hsl(var(--sidebar)); border-right: 1px solid hsl(var(--border));
+  padding: 28px 16px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto;
+}
+.rail .brand { flex: none; padding: 0 12px 20px; display: flex; flex-direction: column; gap: 4px; }
+.rail .brand b { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; }
+.rail .brand span { font-size: 14px; color: hsl(var(--muted-foreground)); line-height: 1.5; }
+.navbtn {
+  font: inherit; text-align: left; color: hsl(var(--foreground)); background: transparent;
+  border: 0; border-radius: calc(var(--radius) - 2px); padding: 12px 14px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 6px; min-height: 44px;
+  flex: none; /* 항목이 많아 목록이 넘칠 때 버튼이 눌려 겹치지 않게 한다 */
+  transition: background-color var(--dur) ease, box-shadow var(--dur) ease;
+}
+.navbtn:hover { background: hsl(var(--accent)); }
+.navbtn[aria-current="true"] { background: hsl(var(--secondary)); box-shadow: inset 3px 0 0 hsl(var(--primary)); }
+.navbtn[aria-current="true"] .t { color: hsl(var(--secondary-foreground)); font-weight: 700; }
+.navbtn .t { font-size: 17px; font-weight: 600; line-height: 1.45; }
+.navbtn .s { display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 1.5; color: hsl(var(--muted-foreground)); }
+.rail .sep { height: 1px; background: hsl(var(--border)); margin: 12px 4px; flex: none; }
+@media (max-width: 860px) {
+  .rail {
+    flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 12px 16px; gap: 8px;
+    border-right: 0; border-bottom: 1px solid hsl(var(--border)); scrollbar-width: thin;
+  }
+  .rail .brand, .rail .sep { display: none; }
+  .navbtn { flex: none; max-width: 230px; padding: 8px 12px; }
+  .navbtn[aria-current="true"] { box-shadow: inset 0 -3px 0 hsl(var(--primary)); }
+  .navbtn .t { font-size: 15px; }
+}
+
+/* Badge (상태: 대기 · 결정함) */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font-size: 14px; font-weight: 600; line-height: 1.5; padding: 1px 10px;
+  border-radius: 999px; border: 1px solid transparent;
+}
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.chip.wait { color: hsl(var(--warning)); background: hsl(var(--warning-muted)); border-color: hsl(var(--warning) / .35); }
+.chip.done { color: hsl(var(--success)); background: hsl(var(--success-muted)); border-color: hsl(var(--success) / .35); }
+
+/* 결정 화면 */
+.stage { overflow-y: auto; min-width: 0; }
+.panel {
+  max-width: 820px; margin: 0 auto; padding-inline: 32px; padding-block: 40px 64px;
+  display: flex; flex-direction: column; gap: 28px;
+}
+@media (max-width: 600px) { .panel { padding-inline: 16px; padding-block: 24px 40px; gap: 24px; } }
+.crumb {
+  font-size: 14px; font-weight: 600; letter-spacing: .02em; line-height: 1.5;
+  color: hsl(var(--primary)); display: flex; flex-wrap: wrap; gap: 6px;
+}
+.context { display: flex; flex-direction: column; gap: 10px; }
+.context ul { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+.context li::marker, .opt li::marker { color: hsl(var(--muted-foreground)); }
+
+/* 선택지: RadioGroup + 선택 카드(FieldLabel을 Card로 감싼 shadcn 모양)
+   카드 안 구성: 머리(배지 + 제목) · 본문(요점) · 바닥(트레이드오프, 구분선 위) */
+.opts { display: flex; flex-direction: column; gap: 12px; }
+.opt {
+  position: relative; display: flex; flex-direction: column; gap: 8px; cursor: pointer;
+  background: hsl(var(--card)); color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border)); border-radius: var(--radius);
+  padding: 20px 22px 20px 56px;
+  box-shadow: 0 1px 2px hsl(222 47% 11% / .04);
+  transition: border-color var(--dur) ease, background-color var(--dur) ease, box-shadow var(--dur) ease;
+}
+.opt:hover { border-color: hsl(var(--input)); }
+.opt.sel, .opt:has(input:checked) {
+  border-color: hsl(var(--primary)); background: hsl(var(--selected));
+  box-shadow: 0 0 0 1px hsl(var(--primary));
+}
+.opt:has(input:focus-visible) { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+.opt input {
+  -webkit-appearance: none; appearance: none; position: absolute; left: 22px; top: 25px; margin: 0;
+  width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+  border: 1.5px solid hsl(var(--input)); background: hsl(var(--card));
+  transition: border-color var(--dur) ease;
+}
+.opt input:checked {
+  border-color: hsl(var(--primary));
+  background: radial-gradient(circle, hsl(var(--primary)) 0 42%, hsl(var(--card)) 47%);
+}
+.opt input:focus-visible { outline: none; }
+@media (forced-colors: active) { .opt input { -webkit-appearance: auto; appearance: auto; } .opt:has(input:focus-visible) { outline-color: Highlight; } }
+.opt .head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.opt ul { margin: 2px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 18px; }
+/* 선택지 도식(선택 사항): 인라인 SVG, 색은 토큰만 */
+.opt .fig { margin-top: 4px; padding: 12px; border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) - 2px); background: hsl(var(--muted) / .4); overflow-x: auto; }
+.opt .fig svg { display: block; max-width: 100%; height: auto; font-size: 14px; }
+@media (max-width: 600px) { .opt .fig { padding: 8px; } }
+.opt .figcap { margin: 8px 0 0; font-size: 14px; color: hsl(var(--muted-foreground)); }
+.opt .tradeoff {
+  margin-top: 6px; padding-top: 12px; border-top: 1px solid hsl(var(--border));
+  font-size: 16px; line-height: 1.65; color: hsl(var(--muted-foreground));
+}
+
+/* 출처 Badge: 기본=outline, 세션=secondary, Codex=전용 토큰, 추천=default(primary) */
+.opt .who {
+  display: inline-flex; align-items: center; white-space: nowrap;
+  font-size: 14px; font-weight: 600; line-height: 1.5; padding: 1px 10px; border-radius: 999px;
+  border: 1px solid hsl(var(--border)); background: transparent; color: hsl(var(--foreground));
+}
+.opt .who.session { background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); border-color: transparent; }
+.opt .who.codex { background: hsl(var(--codex-muted)); color: hsl(var(--codex)); border-color: transparent; }
+.opt .who.mine { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-color: transparent; }
+
+/* 내 의견: Alert 모양 */
+.mine {
+  border: 1px solid hsl(var(--border)); border-left: 3px solid hsl(var(--primary));
+  background: hsl(var(--card)); border-radius: var(--radius); padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.mine b { font-size: 15px; font-weight: 700; color: hsl(var(--primary)); line-height: 1.5; }
+
+/* 메모: Field + FieldLabel + Textarea */
+.note { display: flex; flex-direction: column; gap: 8px; }
+.note label { font-size: 16px; font-weight: 600; line-height: 1.5; color: hsl(var(--foreground)); }
+.note textarea {
+  font: inherit; font-size: 18px; line-height: 1.6; min-height: 104px; padding: 12px 14px; width: 100%;
+  border-radius: calc(var(--radius) - 2px); border: 1px solid hsl(var(--input));
+  background: hsl(var(--card)); color: hsl(var(--foreground)); resize: vertical;
+  box-shadow: 0 1px 2px hsl(222 47% 11% / .04);
+  transition: border-color var(--dur) ease, box-shadow var(--dur) ease;
+}
+.note textarea::placeholder { color: hsl(var(--muted-foreground)); }
+.note textarea:focus-visible { outline: none; border-color: hsl(var(--ring)); box-shadow: 0 0 0 3px hsl(var(--ring) / .35); }
+
+/* 바닥 동작 줄: Separator 위에 Button(outline · default) */
+.actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  border-top: 1px solid hsl(var(--border)); padding-block: 20px 0;
+}
+.btn {
+  font: inherit; font-size: 17px; font-weight: 600; line-height: 1.4;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 10px 20px; border-radius: calc(var(--radius) - 2px); cursor: pointer;
+  border: 1px solid hsl(var(--input)); background: hsl(var(--card)); color: hsl(var(--foreground));
+  box-shadow: 0 1px 2px hsl(222 47% 11% / .04);
+  transition: background-color var(--dur) ease, border-color var(--dur) ease, opacity var(--dur) ease;
+}
+.btn:hover { background: hsl(var(--accent)); }
+.btn.primary { background: hsl(var(--primary)); border-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.btn.primary:hover { background: hsl(var(--primary) / .9); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; pointer-events: none; }
+.spacer { flex: 1; }
+.status { font-size: 15px; line-height: 1.5; color: hsl(var(--muted-foreground)); }
+.status.err { color: hsl(var(--destructive)); font-weight: 600; }
+
+/* 더 알아 두면 좋은 내용: Collapsible 모양 */
+details { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); }
+details > summary {
+  cursor: pointer; padding: 14px 20px; min-height: 44px; font-weight: 600; font-size: 17px;
+  list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  border-radius: var(--radius); transition: background-color var(--dur) ease;
+}
+details > summary:hover { background: hsl(var(--accent)); }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::after { content: "펼치기"; font-size: 15px; color: hsl(var(--primary)); font-weight: 600; white-space: nowrap; }
+details[open] > summary::after { content: "접기"; }
+details[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+details > .inner { padding: 4px 20px 18px; font-size: 17px; display: flex; flex-direction: column; gap: 8px; color: hsl(var(--muted-foreground)); }
+details ul { margin: 0; padding-left: 20px; }
+
+/* 선택 요약: 결정마다 Card (머리: 제목+Badge, 본문: 고른 안·메모, 바닥: link Button) */
+.sumlist { display: flex; flex-direction: column; gap: 12px; }
+.sumrow {
+  background: hsl(var(--card)); color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 18px 22px;
+  display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 2px hsl(222 47% 11% / .04);
+}
+.sumrow .top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; justify-content: space-between; }
+.sumrow .top b { font-size: 18px; font-weight: 700; }
+.sumrow .pick { font-size: 18px; }
+.sumrow .pick.none { color: hsl(var(--muted-foreground)); }
+.sumrow .n { font-size: 16px; color: hsl(var(--muted-foreground)); white-space: pre-wrap; }
+.linkbtn {
+  align-self: flex-start; font: inherit; font-size: 15px; font-weight: 600; line-height: 1.5;
+  color: hsl(var(--primary)); background: none; border: 0; padding: 6px 0; min-height: 44px; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 4px;
+}
+.linkbtn:hover { text-decoration-thickness: 2px; }
+
+/* 저장소 미연결 안내: Alert(warning) 모양 */
+.howto {
+  border: 1px solid hsl(var(--warning) / .4); border-left: 3px solid hsl(var(--warning));
+  background: hsl(var(--warning-muted)); color: hsl(var(--foreground));
+  border-radius: var(--radius); padding: 16px 20px; font-size: 17px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+</style>
+
+<div class="app">
+  <nav class="rail" id="rail" aria-label="결정 목록">
+    <div class="brand"><b>결정 대기함</b><span></span></div>
+  </nav>
+  <div class="stage" id="stage"><section class="panel" id="panel" aria-live="polite"></section></div>
+</div>
+
+<script>
+(function () {
+  // ===== 이 아래 BOARD와 ITEMS만 바꾼다. 나머지 코드는 손대지 않는다. =====
+  var BOARD = {
+    title: '결정 대기함',
+    subtitle: '예시: 날짜 · n개 세션이 답을 기다립니다',
+    reply: '결정 대기함 반영해',  // 완료 버튼이 보내는 첫 줄이자, 버튼을 못 쓸 때 대화창에 칠 문장
+    me: 'big-brother'           // 추천 배지·의견 상자에 쓰는 내 이름(세션 이름)
+  };
+  // 결정 하나 = 항목 하나. id는 저장소 문서 id가 된다(영문·숫자). options[].key도 영문.
+  // who: 'session' | 'codex' | 'other', mine: true는 조율 세션(나)의 추천 표시.
+  var ITEMS = [
+    {
+      id: 'example1', short: '예시: 목록에 쓸 짧은 이름', issue: '예시 이슈 이름 (PROJ-123)',
+      title: '예시: 질문 한 문장으로 끝나게 씁니다?',
+      context: [
+        '예시: 이 결정이 왜 필요한지 한 줄',
+        '예시: 확인된 사실이나 제약 한 줄'
+      ],
+      options: [
+        { key: 'session', who: 'session', label: '세션 권장안', mine: true, title: '예시: 안 제목 한 줄',
+          points: ['예시: 이 안이 하는 일', '예시: 이 안의 근거'],
+          tradeoff: '예시: 얻는 것과 잃는 것 한 문장' },
+          // 선택지끼리 구조(흐름·순서·배치)가 다를 때만 figure에 인라인 SVG 문자열을 넣는다.
+          // 예: figure: '<svg width="280" viewBox="0 0 280 60" role="img" aria-label="…">…</svg>', figureCaption: '한 문장'
+        { key: 'codex', who: 'codex', label: 'Codex 권장안', title: '예시: 다른 안 제목',
+          points: ['예시: 이 안이 하는 일'],
+          tradeoff: '예시: 얻는 것과 잃는 것 한 문장' }
+      ],
+      mineText: '예시: 내가 추천하는 안과 이유 한두 문장',
+      more: ['예시: 결정에 꼭 필요하지는 않지만 알아 두면 좋은 내용']
+    }
+  ];
+  // ===== 바꾸는 부분 끝 =====
+
+  var state = {};          // id -> {choice, note, savedAt}
+  var draft = {};          // id -> {choice, note} 저장 전 선택
+  var current = ITEMS.length ? 'd' + ITEMS[0].id : 'summary';
+  var db = null;
+  var dbState = 'loading'; // loading | ready | off
+  var comments = null;
+  var sendState = 'checking'; // checking | available | writers_only | no_session | off
+  var sending = false, sentAt = '', sendErr = '';
+
+  try { var h = (location.hash || '').slice(1); if (h) current = h; } catch (e) {}
+  try { var saved = localStorage.getItem('draft'); if (saved) draft = JSON.parse(saved) || {}; } catch (e) {}
+
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function byId(id) { for (var i = 0; i < ITEMS.length; i++) if (ITEMS[i].id === id) return ITEMS[i]; return null; }
+  function optLabel(item, key) { for (var i = 0; i < item.options.length; i++) if (item.options[i].key === key) return item.options[i].label + ': ' + item.options[i].title; return key === 'other' ? '다른 의견' : ''; }
+  function fmt(iso) { try { var d = new Date(iso); return (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); } catch (e) { return ''; } }
+  function saveDraft() { try { localStorage.setItem('draft', JSON.stringify(draft)); } catch (e) {} }
+
+  function renderRail() {
+    var rail = document.getElementById('rail');
+    var html = '<div class="brand"><b>' + esc(BOARD.title) + '</b><span>' + esc(BOARD.subtitle) + '</span></div>';
+    ITEMS.forEach(function (it) {
+      var done = state[it.id] && state[it.id].choice;
+      html += '<button class="navbtn" data-go="d' + it.id + '"' + (current === 'd' + it.id ? ' aria-current="true"' : '') + '>' +
+        '<span class="t">' + esc(it.short) + '</span>' +
+        '<span class="s">' + esc(it.issue.replace(/ \(([A-Z][A-Z0-9]*-\d+)\)/, ' · $1')) + '</span>' +
+        '<span class="s">' + (done ? '<span class="chip done">결정함</span>' : '<span class="chip wait">대기</span>') + '</span></button>';
+    });
+    html += '<div class="sep"></div><button class="navbtn" data-go="summary"' + (current === 'summary' ? ' aria-current="true"' : '') + '><span class="t">선택 요약</span><span class="s">' + countDone() + ' / ' + ITEMS.length + ' 결정</span></button>';
+    rail.innerHTML = html;
+  }
+  function countDone() { var n = 0; ITEMS.forEach(function (it) { if (state[it.id] && state[it.id].choice) n++; }); return n; }
+
+  function renderItem(it) {
+    var saved = state[it.id] || {};
+    var d = draft[it.id] || {};
+    var choice = d.choice != null ? d.choice : (saved.choice || '');
+    var note = d.note != null ? d.note : (saved.note || '');
+    var idx = ITEMS.indexOf(it);
+    var html = '<div class="crumb">' + esc(it.issue) + ' · ' + (idx + 1) + ' / ' + ITEMS.length + '</div>' +
+      '<h1>' + esc(it.title) + '</h1>' +
+      '<div class="context">' + '<ul>' + it.context.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>' +
+      '<h2>선택지</h2><div class="opts" role="radiogroup" aria-label="선택지">';
+    it.options.concat([{ key: 'other', who: 'other', label: '다른 의견', title: '아래 메모에 직접 적습니다', points: [], tradeoff: '' }]).forEach(function (o) {
+      var id = 'opt-' + it.id + '-' + o.key;
+      html += '<label class="opt' + (choice === o.key ? ' sel' : '') + '" for="' + id + '">' +
+        '<input type="radio" name="opt-' + it.id + '" id="' + id + '" value="' + o.key + '"' + (choice === o.key ? ' checked' : '') + '>' +
+        '<div class="head"><span class="who ' + o.who + '">' + esc(o.label) + '</span>' + (o.mine ? '<span class="who mine">' + esc(BOARD.me) + ' 추천</span>' : '') + '</div>' +
+        '<h3>' + esc(o.title) + '</h3>' +
+        (o.points.length ? '<ul>' + o.points.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '') +
+        (o.figure ? '<div class="fig">' + o.figure + (o.figureCaption ? '<p class="figcap">' + esc(o.figureCaption) + '</p>' : '') + '</div>' : '') +
+        (o.tradeoff ? '<p class="tradeoff">' + esc(o.tradeoff) + '</p>' : '') +
+        '</label>';
+    });
+    html += '</div>' +
+      '<div class="mine"><b>' + esc(BOARD.me) + ' 의견</b><span>' + esc(it.mineText) + '</span></div>' +
+      '<div class="note"><label for="note-' + it.id + '">메모 (선택 사항 · "다른 의견"이면 여기에 적어 주세요)</label>' +
+      '<textarea id="note-' + it.id + '" placeholder="예: 권장안으로 하되 이 부분만 바꿔 주세요">' + esc(note) + '</textarea></div>' +
+      '<details><summary>더 알아 두면 좋은 내용</summary><div class="inner"><ul>' + it.more.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div></details>' +
+      '<div class="actions">' +
+        '<button class="btn" data-go="' + (idx > 0 ? 'd' + ITEMS[idx - 1].id : '') + '"' + (idx > 0 ? '' : ' disabled') + '>이전</button>' +
+        '<span class="spacer"></span>' +
+        '<span class="status" id="st-' + it.id + '">' + statusText(it.id) + '</span>' +
+        '<button class="btn primary" id="save-' + it.id + '">' + (idx < ITEMS.length - 1 ? '저장하고 다음' : '저장하고 요약 보기') + '</button>' +
+      '</div>';
+    return html;
+  }
+  function statusText(id) {
+    var s = state[id];
+    if (dbState === 'off') return '저장소에 연결되지 않아 이 브라우저에만 남습니다';
+    if (s && s.savedAt) return fmt(s.savedAt) + ' 저장됨';
+    return '아직 저장하지 않음';
+  }
+
+  function renderSummary() {
+    var html = '<div class="crumb">선택 요약</div><h1>고른 내용</h1>' +
+      '<p>저장한 선택은 ' + esc(BOARD.me) + '가 읽어 각 세션에 전달합니다. 다 고르셨으면 아래 "완료하고 반영 요청" 버튼을 눌러 주세요. 버튼을 쓸 수 없으면 대화창에 "' + esc(BOARD.reply) + '"라고 말씀해 주셔도 됩니다.</p>' +
+      '<div class="sumlist">';
+    ITEMS.forEach(function (it) {
+      var s = state[it.id] || {};
+      html += '<div class="sumrow"><div class="top"><b>' + esc(it.short) + '</b>' +
+        (s.choice ? '<span class="chip done">결정함</span>' : '<span class="chip wait">대기</span>') + '</div>' +
+        '<span class="pick' + (s.choice ? '' : ' none') + '">' + (s.choice ? esc(optLabel(it, s.choice)) : '아직 고르지 않았습니다') + '</span>' +
+        (s.note ? '<span class="n">메모: ' + esc(s.note) + '</span>' : '') +
+        '<button class="linkbtn" data-go="d' + it.id + '">' + (s.choice ? '다시 보기' : '고르러 가기') + '</button></div>';
+    });
+    html += '</div>';
+    var left = ITEMS.length - countDone();
+    html += '<div class="actions" id="done-box"><span class="spacer"></span>' +
+      '<span class="status" id="done-st">' + esc(doneStatus(left)) + '</span>' +
+      '<button class="btn primary" id="done"' + (sendState === 'available' && !sending && !sentAt ? '' : ' disabled') + '>' + (sentAt ? '보냈습니다' : '완료하고 반영 요청') + '</button></div>';
+    if (dbState === 'off') {
+      html += '<div class="howto">이 화면은 저장소에 연결되지 않았습니다. 아래 버튼으로 선택 내용을 복사해 대화창에 붙여 주세요.</div>' +
+        '<div class="actions"><span class="spacer"></span><span class="status" id="copy-st"></span><button class="btn primary" id="copy">선택 내용 복사</button></div>';
+    }
+    return html;
+  }
+  function summaryText() {
+    return ITEMS.map(function (it) {
+      var s = state[it.id] || {};
+      return '[' + it.id + '] ' + it.short + ': ' + (s.choice ? optLabel(it, s.choice) : '미결정') + (s.note ? ' / 메모: ' + s.note : '');
+    }).join('\n');
+  }
+  var SEND_REASON = {
+    writers_only: '편집 권한이 있는 사람만 보낼 수 있습니다. 대화창에 "' + BOARD.reply + '"라고 말씀해 주세요',
+    no_session: '지금 이 페이지를 지켜보는 ' + BOARD.me + ' 세션이 없습니다. 대화창에 "' + BOARD.reply + '"라고 말씀해 주세요',
+    off: '이 화면에서는 버튼을 쓸 수 없습니다. 대화창에 "' + BOARD.reply + '"라고 말씀해 주세요'
+  };
+  function doneStatus(left) {
+    if (sentAt) return fmt(sentAt) + '에 보냈습니다. ' + BOARD.me + '가 이 댓글 스레드에 답합니다';
+    if (sending) return '보내는 중…';
+    if (sendErr) return sendErr;
+    if (sendState === 'checking') return '보낼 수 있는지 확인하는 중…';
+    if (sendState !== 'available') return SEND_REASON[sendState] || SEND_REASON.off;
+    return left > 0 ? '아직 ' + left + '건을 고르지 않았습니다. 지금 보내면 그 항목은 미결정으로 전달됩니다' : '모두 골랐습니다';
+  }
+  function refreshSend() {
+    if (!comments) { sendState = 'off'; if (current === 'summary') render(); return; }
+    comments.canSendToClaude().then(function (v) { sendState = v; }, function () { sendState = 'off'; })
+      .then(function () { if (current === 'summary') render(); });
+  }
+  function sendDone() {
+    var btn = document.getElementById('done');
+    if (!comments || sending || sentAt || !btn) return;
+    sending = true; sendErr = ''; render();
+    var anchorEl = document.getElementById('done-box') || btn;
+    comments.anchorFor(anchorEl).then(function (anchor) {
+      return comments.sendToClaude({ anchor: anchor, text: BOARD.reply + ' (' + countDone() + ' / ' + ITEMS.length + ' 결정)\n' + summaryText() });
+    }).then(function () {
+      sending = false; sentAt = new Date().toISOString(); render();
+    }, function (e) {
+      sending = false;
+      var code = e && e.code;
+      sendErr = code === 'claude_unavailable' ? SEND_REASON.no_session
+        : code === 'rate_limited' ? '너무 자주 보냈습니다. 잠시 뒤 다시 눌러 주세요'
+        : code === 'consent_required' || code === 'forbidden' ? '댓글 권한을 허락하지 않아 보내지 못했습니다'
+        : '보내지 못했습니다. 대화창에 "' + BOARD.reply + '"라고 말씀해 주세요';
+      refreshSend();
+    });
+  }
+
+  function render() {
+    renderRail();
+    var panel = document.getElementById('panel');
+    var it = current.charAt(0) === 'd' ? byId(current.slice(1)) : null;
+    panel.innerHTML = it ? renderItem(it) : renderSummary();
+    if (it) wireItem(it);
+    var done = document.getElementById('done');
+    if (done) done.addEventListener('click', sendDone);
+    var copy = document.getElementById('copy');
+    if (copy) copy.addEventListener('click', function () {
+      var st = document.getElementById('copy-st');
+      try {
+        navigator.clipboard.writeText(summaryText()).then(function () { st.textContent = '복사했습니다'; }, function () { st.textContent = '복사가 막혔습니다. 위 내용을 직접 옮겨 주세요'; });
+      } catch (e) { st.textContent = '복사가 막혔습니다. 위 내용을 직접 옮겨 주세요'; }
+    });
+  }
+
+  function wireItem(it) {
+    var panel = document.getElementById('panel');
+    Array.prototype.forEach.call(panel.querySelectorAll('input[type=radio]'), function (r) {
+      r.addEventListener('change', function () {
+        draft[it.id] = draft[it.id] || {};
+        draft[it.id].choice = r.value; saveDraft();
+        Array.prototype.forEach.call(panel.querySelectorAll('.opt'), function (l) { l.classList.toggle('sel', l.getAttribute('for') === r.id); });
+      });
+    });
+    var ta = document.getElementById('note-' + it.id);
+    ta.addEventListener('input', function () { draft[it.id] = draft[it.id] || {}; draft[it.id].note = ta.value; saveDraft(); });
+    document.getElementById('save-' + it.id).addEventListener('click', function () { save(it); });
+  }
+
+  function save(it) {
+    var checked = document.querySelector('input[name="opt-' + it.id + '"]:checked');
+    var st = document.getElementById('st-' + it.id);
+    var note = document.getElementById('note-' + it.id).value.trim();
+    if (!checked) { st.textContent = '선택지를 하나 골라 주세요'; st.className = 'status err'; return; }
+    if (checked.value === 'other' && !note) { st.textContent = '"다른 의견"은 메모에 내용을 적어 주세요'; st.className = 'status err'; return; }
+    var body = { choice: checked.value, note: note, savedAt: new Date().toISOString(), issue: it.issue };
+    var btn = document.getElementById('save-' + it.id);
+    function next() {
+      state[it.id] = body; delete draft[it.id]; saveDraft();
+      var idx = ITEMS.indexOf(it);
+      go(idx < ITEMS.length - 1 ? 'd' + ITEMS[idx + 1].id : 'summary');
+    }
+    if (!db) { next(); return; }
+    btn.disabled = true; st.textContent = '저장 중…'; st.className = 'status';
+    db.doc('decisions/' + it.id).set(body).then(next, function (e) {
+      btn.disabled = false; st.className = 'status err';
+      st.textContent = e && e.code === 'invalid_argument' ? '이 화면에서는 저장 권한이 없습니다' : '저장하지 못했습니다. 잠시 뒤 다시 눌러 주세요';
+    });
+  }
+
+  function go(target) {
+    if (!target) return;
+    current = target;
+    try { history.replaceState(null, '', '#' + target); } catch (e) {}
+    render();
+    if (target === 'summary') refreshSend();
+    var stage = document.getElementById('stage'); if (stage) stage.scrollTop = 0;
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-go]');
+    if (b && !b.disabled) go(b.getAttribute('data-go'));
+  });
+
+  render();
+
+  (window.claude && window.claude.use ? window.claude.use('comments') : Promise.resolve(null)).then(function (ns) {
+    comments = ns; refreshSend();
+  }, function () { comments = null; refreshSend(); });
+
+  (window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null)).then(function (ns) {
+    if (!ns) { dbState = 'off'; render(); return; }
+    db = ns; dbState = 'ready';
+    db.collection('decisions').onSnapshot(function (snap) {
+      var next = {};
+      snap.docs.forEach(function (d) { if (d.exists) next[d.id] = d.data(); });
+      state = next;
+      var active = document.activeElement;
+      if (!(active && active.tagName === 'TEXTAREA')) render(); else renderRail();
+    }, function () { dbState = 'off'; render(); });
+  }, function () { dbState = 'off'; render(); });
+})();
+</script>

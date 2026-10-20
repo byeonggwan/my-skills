@@ -1,0 +1,305 @@
+<!-- artifact-design 계약: 문서 자체의 doctype/html/head/body 는 쓰지 않는다. 발행 서버가 감싼다. -->
+<title>{{주제}} 화면기획서</title>
+<style>
+  /* 글꼴: 제품과 같은 Pretendard. 발행 때 files로 fonts/PretendardVariable.woff2를 함께 올린다 */
+  @font-face { font-family: "Pretendard Variable"; font-weight: 45 920; font-style: normal; font-display: swap;
+    src: url("fonts/PretendardVariable.woff2") format("woff2-variations"), url("fonts/PretendardVariable.woff2") format("woff2"); }
+  /* ── 문서 토큰 (문서 자체는 라이트·다크 대응, 제품 목업은 항상 라이트) ── */
+  :root {
+    --bg: #F4F6F4; --surface: #FFFFFF; --ink: #1B241E; --muted: #5B6A61;
+    --line: #DCE2DC; --accent: #0F7B5F; --accent-ink: #0B5C47; --accent-soft: #E3F1EB;
+    --sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111713; --surface: #1A211C; --ink: #E7EDE8; --muted: #94A29A;
+      --line: #2C362F; --accent: #41C39A; --accent-ink: #6AD4B0; --accent-soft: #173B30;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111713; --surface: #1A211C; --ink: #E7EDE8; --muted: #94A29A;
+    --line: #2C362F; --accent: #41C39A; --accent-ink: #6AD4B0; --accent-soft: #173B30;
+  }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.6; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 36px 16px 90px; }
+
+  /* ── 문서 머리 ── */
+  .eyebrow { font-size: 12px; letter-spacing: .08em; color: var(--accent-ink); font-weight: 600; }
+  .eyebrow a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  .eyebrow a:hover { color: var(--accent); }
+  .eyebrow .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  h1 { font-size: 28px; font-weight: 700; margin: 6px 0 8px; text-wrap: balance; }
+  .lede { color: var(--muted); max-width: 76ch; margin: 0 0 14px; font-size: 14.5px; }
+  .lede a { color: var(--accent-ink); }
+  .howto { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-soft); color: var(--accent-ink); border-radius: 10px; padding: 9px 14px; font-size: 13.5px; font-weight: 600; margin: 0 8px 6px 0; }
+  .howto .dot { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; flex: none; }
+
+  /* ── 화면 전환 탭 (화면마다 대상 역할을 .who 로) ── */
+  .screen-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 26px 0 12px; }
+  .screen-tabs button { font-family: var(--sans); font-size: 13.5px; font-weight: 600; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; text-align: left; }
+  .screen-tabs button .who { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: .04em; }
+  .screen-tabs button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .screen-tabs button.on .who { color: rgba(255,255,255,.85); }
+  .screen-tabs button:focus-visible, .view-toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── 현재 화면 / 변경 후 토글 (기존 화면을 바꾸는 경우 필수) ── */
+  .view-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; margin-bottom: 14px; background: var(--surface); }
+  .view-toggle button { font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 7px 16px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+  .view-toggle button + button { border-left: 1px solid var(--line); }
+  .view-toggle button.on { background: var(--accent-soft); color: var(--accent-ink); }
+  .view-note { font-size: 12.5px; color: var(--muted); margin: 0 0 10px; }
+  .view-note code { font-size: 11.5px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+
+  /* ── 본문 그리드: 좌 목업 / 우 고정 패널 ── */
+  .stage { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+  @media (max-width: 980px) { .stage { grid-template-columns: 1fr; } .panel { position: static !important; } }
+
+  /* ── 브라우저 프레임 (제품 화면은 항상 라이트로 묘사) ── */
+  .frame { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .frame-bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .frame-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .frame-bar .url { margin-left: 10px; font-size: 11.5px; color: var(--muted); }
+  .frame-bar .tag { margin-left: auto; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 9px; background: var(--accent-soft); color: var(--accent-ink); white-space: nowrap; }
+  .frame-bar .tag.now { background: #EEF0EE; color: #5B6A61; }
+  .screen { background: #ffffff; color: #111827; font-size: 13px; overflow-x: auto; }
+  .screen-inner { min-width: 760px; padding: 18px 22px 24px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* ── 범용 목업 부품 (제품 무관) ── */
+  .sec-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sec-head h4 { font-size: 15px; font-weight: 700; margin: 0; }
+  .sec-head h4 small { font-weight: 400; color: #6b7280; }
+  .btn { font-size: 12px; font-weight: 600; border-radius: 7px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+  .btn.primary { background: #111827; color: #fff; border: 1px solid #111827; }
+  .btn.outline { border: 1px solid #d1d5db; background: #fff; color: #111827; }
+  .sel { border: 1px solid #d1d5db; border-radius: 7px; padding: 5px 10px; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; background: #fff; color: #111827; white-space: nowrap; }
+  .sel .car { color: #9ca3af; font-size: 10px; }
+  .badge { font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 2px 8px; background: #f3f4f6; color: #4b5563; display: inline-block; }
+  .badge.blue { background: #dbeafe; color: #1d4ed8; }
+  .badge.amber { background: #fef3c7; color: #b45309; }
+  .badge.violet { background: #ede9fe; color: #6d28d9; }
+  .badge.green { background: #ecfdf5; color: #047857; }
+  .badge.red { background: #fef2f2; color: #b91c1c; }
+  .badge.sky { background: #e0f2fe; color: #0369a1; }
+  .badge.teal { background: #ccfbf1; color: #0f766e; }
+  .badge.orange { background: #ffedd5; color: #c2410c; }
+  .mock-table { border: 1px solid #e5e7eb; border-radius: 9px; overflow-x: auto; }
+  .mock-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .mock-table th { text-align: left; padding: 9px 11px; color: #6b7280; font-weight: 600; border-bottom: 1px solid #e5e7eb; background: #fff; white-space: nowrap; }
+  .mock-table th small { display: block; font-weight: 400; font-size: 10.5px; }
+  .mock-table td { padding: 9px 11px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .mock-table tr:last-child td { border-bottom: none; }
+  .kcard { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; background: #fff; }
+  .kcard .kt { font-size: 11px; color: #6b7280; }
+  .kcard .kv { font-size: 17px; font-weight: 700; margin-top: 2px; }
+  .kcard .kv small { font-size: 11px; color: #6b7280; font-weight: 400; }
+  .help { font-size: 12px; color: #6b7280; background: #f9fafb; border-radius: 9px; padding: 12px 14px; }
+  .help b { color: #374151; }
+  .banner { border: 1px solid #fcd34d; background: #fffbeb; color: #92400e; border-radius: 10px; padding: 11px 14px; font-size: 12.5px; display: flex; gap: 8px; align-items: flex-start; }
+  .future { border: 1.5px dashed #94a3b8; background: #f8fafc; border-radius: 12px; padding: 12px 16px; font-size: 12.5px; color: #475569; }
+  .future .tag { font-size: 10px; font-weight: 700; letter-spacing: .05em; color: #64748b; border: 1px solid #cbd5e1; border-radius: 999px; padding: 1px 8px; margin-right: 8px; }
+  .modal { width: 400px; max-width: 100%; margin: 0 auto; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.18); }
+  .modal-head { display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; font-size: 13.5px; font-weight: 700; color: #111827; }
+  .modal-body { padding: 14px 16px 16px; }
+  .field { margin-bottom: 10px; }
+  .field label { font-size: 11px; color: #6b7280; display: block; margin-bottom: 3px; }
+  .field .in { border: 1px solid #d1d5db; border-radius: 7px; padding: 7px 10px; font-size: 12.5px; color: #111827; background: #fff; display: inline-block; }
+  .popup-caption { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 4px; }
+  .note { font-size: 10.5px; color: #9ca3af; margin: 6px 0 0; }
+
+  /* ── 변경 지점 (핫스팟) ── */
+  .spot { position: relative; cursor: pointer; outline: 2px dashed var(--accent); outline-offset: 3px; border-radius: 6px; transition: outline-color .15s, background-color .15s; }
+  .spot:hover { background: rgba(16, 185, 129, .07); }
+  /* 선택 상태는 is-picked. 목업 드롭다운 부품 .sel과 이름이 겹치면 선택한 블록이 드롭다운 모양으로 깨진다 */
+  .spot.is-picked { outline-style: solid; outline-width: 2.5px; background: rgba(16, 185, 129, .1); }
+  .spot .pin { position: absolute; top: -11px; left: -11px; width: 21px; height: 21px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,.25); z-index: 5; pointer-events: none; }
+  td.spot, th.spot { outline-offset: -2px; }
+  td.spot .pin, th.spot .pin { top: -7px; left: -7px; }
+  /* 변경 후 화면에서 바뀌지 않는 요소 표지 */
+  .keep { position: relative; }
+  .keep::before { content: "그대로"; position: absolute; top: -9px; right: 10px; font-size: 9.5px; font-weight: 700; letter-spacing: .04em; color: #6b7280; background: #fff; border: 1px solid #e5e7eb; border-radius: 999px; padding: 0 7px; z-index: 4; }
+
+  /* ── 우측 설명 패널 ── */
+  .panel { position: sticky; top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; min-height: 320px; }
+  .panel .ph { font-size: 12px; letter-spacing: .06em; color: var(--accent-ink); font-weight: 700; margin-bottom: 10px; }
+  .panel .empty { color: var(--muted); font-size: 13.5px; }
+  .panel h3 { font-size: 16.5px; font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; gap: 9px; }
+  .panel h3 .pin { position: static; width: 21px; height: 21px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .panel .kind { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 9px; display: inline-block; margin-bottom: 12px; background: var(--accent-soft); color: var(--accent-ink); }
+  .panel dl { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .panel dt { font-size: 12px; font-weight: 700; color: var(--accent-ink); margin-bottom: 2px; }
+  .panel dd { margin: 0; font-size: 13.5px; color: var(--ink); }
+  .panel dd.mut { color: var(--muted); font-size: 12.5px; }
+  .panel ul.now { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink); display: flex; flex-direction: column; gap: 5px; }
+  .panel ul.now li b { font-weight: 600; }
+  .panel ul.now li code { font-size: 11.5px; color: var(--muted); background: var(--bg); padding: 0 5px; border-radius: 4px; }
+  .panel .spots-nav { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; gap: 6px; flex-wrap: wrap; }
+  .panel .spots-nav button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 700; cursor: pointer; font-family: var(--sans); }
+  .panel .spots-nav button.cur { background: var(--accent); border-color: var(--accent); color: #fff; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* 이 문서 전용 — 코드에서 확인한 구조를 그리기 위해 새로 쓴 부품은 여기 아래에 */
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><a href="{{이슈 주소}}" target="_blank" rel="noopener">{{이슈 키}}<span class="sr-only"> (Jira, 새 탭)</span></a> · {{이슈 한 줄 제목}} · {{작성일}}{{ · 개정 이력이 있으면 " · YYYY-MM-DD 개정(무엇)" }}</div>
+    <h1>{{주제}} 화면기획서</h1>
+    <p class="lede">{{왜 이 변경이 필요한지 2~3문장. 정책·스펙 출처가 있으면 <a href="{{URL}}">{{문서명}}</a> 링크. 예시 수치가 있으면 "예시 수치는 …기준이며 실제 값은 …에서 확정합니다" 문장.}}</p>
+    <span class="howto"><span class="dot">1</span>화면 위의 "현재 화면 / 변경 후"를 눌러 두 상태를 번갈아 봅니다</span>
+    <span class="howto"><span class="dot">2</span>변경 후 화면의 초록 점선 영역을 클릭하면 오른쪽에 설명이 나타납니다</span>
+  </header>
+
+  <nav class="screen-tabs" id="tabs">
+    <!-- 화면마다 버튼 하나. data-screen 은 A, B, C… .who 는 그 화면을 보는 역할 -->
+    <button data-screen="A" class="on">{{화면 A 이름}}<span class="who">{{대상 역할}}</span></button>
+    <button data-screen="B">{{화면 B 이름}}<span class="who">{{대상 역할}}</span></button>
+  </nav>
+
+  <div class="stage">
+    <div>
+      <!-- ═══ 화면 A: 기존 화면을 바꾸는 경우 — 현재/변경 후 두 프레임 ═══ -->
+      <section class="screen-page" data-screen="A">
+        <div class="view-toggle" role="tablist" aria-label="{{화면 A 이름}} 보기 전환">
+          <button data-view="now" class="on">현재 화면</button>
+          <button data-view="next">변경 후</button>
+        </div>
+        <p class="view-note" data-note="now">{{현재 화면이 무엇을 보여 주는지 한 문장. 읽는 데이터·집계 단위 등.}}</p>
+        <p class="view-note" data-note="next" hidden>{{무엇을 더하고 무엇을 그대로 두는지 한 문장. "그대로" 표지가 붙은 요소는 변경이 없습니다.}}</p>
+
+        <div class="frame view" data-view="now">
+          <div class="frame-bar"><i></i><i></i><i></i><span class="url">{{/경로}}</span><span class="tag now">현재 화면 · {{YYYY-MM-DD}} 코드 기준</span></div>
+          <div class="screen"><div class="screen-inner">
+            {{현재 화면 목업 — 코드(라우트·컴포넌트·locale 문구)에서 옮긴 그대로. spot 없음}}
+          </div></div>
+        </div>
+
+        <div class="frame view" data-view="next" hidden>
+          <div class="frame-bar"><i></i><i></i><i></i><span class="url">{{/경로}}</span><span class="tag">변경 후</span></div>
+          <div class="screen"><div class="screen-inner">
+            {{변경 후 목업. 바뀌지 않는 블록에는 class="keep", 바뀌는 자리에는
+               <div class="spot" data-spot="a1"><span class="pin">1</span>…</div> }}
+          </div></div>
+        </div>
+      </section>
+
+      <!-- ═══ 화면 B: 신규 화면 — 변경 후 프레임 하나, 토글 없음 ═══ -->
+      <section class="screen-page" data-screen="B" hidden>
+        <div class="frame">
+          <div class="frame-bar"><i></i><i></i><i></i><span class="url">{{/경로}} — 신규 화면</span><span class="tag">신규</span></div>
+          <div class="screen"><div class="screen-inner">
+            {{목업. 모든 블록이 새로 생기므로 설명이 필요한 단위마다 spot}}
+          </div></div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="panel" id="panel" aria-live="polite">
+      <div class="ph" id="panel-head">기능 설명</div>
+      <div id="panel-body"></div>
+      <div class="spots-nav" id="spots-nav"></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  // 현재 화면 구성(코드 기준). 토글이 있는 화면만 키를 둔다. 마지막 항목은 회색 글씨로 "지금 이 화면이 답하지 못하는 질문" 한 문장.
+  const NOW = {
+    A: [
+      '<li><b>{{요소 이름}}</b> — {{무엇을 보여 주는지}}. <code>{{데이터 출처}}</code></li>',
+      '<li style="color:var(--muted)">{{지금 이 화면에서 알 수 없는 것 한 문장}}</li>'
+    ]
+  };
+
+  // 변경 지점. 키 = data-spot 값. n 은 화면 안에서의 번호(1부터), 화면이 바뀌면 1부터 다시.
+  // kind 는 다음 중 하나: 신규 기능 · 변경되는 기능 · 추가되는 데이터 · 추가되는 설정 · 정책 결정 · 신규 문구 · 로드맵 (이번 범위 아님)
+  const SPOTS = {
+    a1: { n: 1, title: "{{짧은 제목}}", kind: "{{종류}}",
+      what: "{{무엇이 생기나: 화면에 보이는 것을 사용자 문구로. 어디에, 어떤 모양으로, 무엇을 고르면 무엇이 바뀌는지}}",
+      why:  "{{왜 필요한가: 결정 배경·운영상 이유·수치 근거}}",
+      data: "{{참고: 데이터 출처, 예외, 범위 밖, 다른 화면과의 관계. 코드 경로·필드명은 여기에만}}" }
+  };
+  // 화면별로 보여 줄 spot 순서. 같은 spot 이 여러 화면에 있으면 각 화면 목록에 모두 넣는다.
+  const SCREEN_SPOTS = { A: ['a1'], B: [] };
+
+  const panelHead = document.getElementById('panel-head');
+  const panelBody = document.getElementById('panel-body');
+  const spotsNav = document.getElementById('spots-nav');
+  let currentScreen = document.querySelector('#tabs button.on').dataset.screen;
+  let currentView = 'now';
+  let currentSpot = null;
+
+  function hasToggle() { return !!document.querySelector('.screen-page[data-screen="' + currentScreen + '"] .view-toggle'); }
+  function renderNow() {
+    panelHead.textContent = '현재 화면 구성 (코드 기준)';
+    panelBody.className = '';
+    panelBody.innerHTML = '<ul class="now">' + (NOW[currentScreen] || []).join('') + '</ul>';
+    spotsNav.innerHTML = '';
+  }
+  function renderNextEmpty() {
+    panelHead.textContent = '기능 설명';
+    panelBody.className = 'empty';
+    panelBody.textContent = '왼쪽 화면에서 초록 점선으로 표시된 번호 영역을 클릭하면, 그 자리에 추가되는 기능과 데이터에 대한 설명이 여기에 표시됩니다.' + (hasToggle() ? ' "그대로" 표지가 붙은 요소는 변경이 없습니다.' : '');
+    renderNav();
+  }
+  function renderPanel(id) {
+    const s = SPOTS[id]; if (!s) return;
+    panelHead.textContent = '기능 설명';
+    panelBody.className = '';
+    panelBody.innerHTML =
+      '<h3><span class="pin">' + s.n + '</span>' + s.title + '</h3>' +
+      '<span class="kind">' + s.kind + '</span>' +
+      '<dl>' +
+      '<div><dt>무엇이 생기나</dt><dd>' + s.what + '</dd></div>' +
+      '<div><dt>왜 필요한가</dt><dd>' + s.why + '</dd></div>' +
+      '<div><dt>참고</dt><dd class="mut">' + s.data + '</dd></div>' +
+      '</dl>';
+  }
+  function renderNav() {
+    spotsNav.innerHTML = '';
+    (SCREEN_SPOTS[currentScreen] || []).forEach(id => {
+      const b = document.createElement('button');
+      b.textContent = SPOTS[id].n;
+      b.className = id === currentSpot ? 'cur' : '';
+      b.setAttribute('aria-label', SPOTS[id].title);
+      b.addEventListener('click', () => selectSpot(id, false));
+      spotsNav.appendChild(b);
+    });
+  }
+  function selectSpot(id, scroll) {
+    currentSpot = id;
+    document.querySelectorAll('.spot').forEach(el => el.classList.toggle('is-picked', el.dataset.spot === id));
+    renderPanel(id); renderNav();
+    if (scroll && window.innerWidth <= 980) document.getElementById('panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function resetPanel() {
+    currentSpot = null;
+    document.querySelectorAll('.spot').forEach(el => el.classList.remove('is-picked'));
+    if (hasToggle() && currentView === 'now') renderNow(); else renderNextEmpty();
+  }
+  function applyView() {
+    const page = document.querySelector('.screen-page[data-screen="' + currentScreen + '"]');
+    if (hasToggle()) {
+      page.querySelectorAll('.view').forEach(f => { f.hidden = f.dataset.view !== currentView; });
+      page.querySelectorAll('.view-note').forEach(n => { n.hidden = n.dataset.note !== currentView; });
+      page.querySelectorAll('.view-toggle button').forEach(b => b.classList.toggle('on', b.dataset.view === currentView));
+    }
+    resetPanel();
+  }
+
+  document.querySelectorAll('.spot').forEach(el => {
+    el.addEventListener('click', (e) => { e.stopPropagation(); selectSpot(el.dataset.spot, true); });
+  });
+  document.querySelectorAll('.view-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => { currentView = btn.dataset.view; applyView(); });
+  });
+  document.querySelectorAll('#tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentScreen = btn.dataset.screen;
+      document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b === btn));
+      document.querySelectorAll('.screen-page').forEach(p => { p.hidden = p.dataset.screen !== currentScreen; });
+      currentView = 'now';
+      applyView();
+    });
+  });
+  applyView();
+</script>

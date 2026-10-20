@@ -1,0 +1,37 @@
+# 허용 목록 방식: ~/.claude에는 인증 파일·대화 기록·메모리가 함께 있으므로, 아래에 적은 것만 추적한다.
+/*
+!/.gitignore
+!/README.md
+!/agents/
+!/hooks/
+!/skills/
+!/tools/
+
+# 스킬: 범용 스킬만 추적한다.
+/skills/*
+!/skills/add-to-llm-wiki/
+!/skills/big-brother/
+!/skills/building-decision-boards/
+!/skills/codex-verify/
+!/skills/create-implementation-review-docs/
+!/skills/designing-with-uupm-and-shadcn/
+!/skills/explain-diff-html/
+!/skills/operating-orca-cli/
+!/skills/writing-screen-planning-docs/
+!/skills/writing-task-issues/
+!/skills/writing-tech-specs/
+# 환경 전용 파일은 각 스킬의 local/ 아래에 둔다(공개 저장소에 넣지 않음).
+/skills/*/local/
+
+# 훅: 스크립트만 추적한다. 이름표·키 목록·고정 이름은 환경 데이터다.
+/hooks/*
+!/hooks/jira-session-title.sh
+
+# 도구: 금지어 검사 훅만 추적한다.
+/tools/*
+!/tools/pre-commit
+
+# 공통
+node_modules/
+*.bak*
+.DS_Store
