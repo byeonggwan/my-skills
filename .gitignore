@@ -2,6 +2,7 @@
 /*
 !/.gitignore
 !/README.md
+!/settings.env.example.json
 !/agents/
 !/hooks/
 !/skills/

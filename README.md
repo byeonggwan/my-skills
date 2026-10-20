@@ -10,6 +10,7 @@
 | `agents/` | 사용자 정의 서브에이전트 |
 | `hooks/jira-session-title.sh` | Jira 이슈 키로 세션 제목을 붙이는 UserPromptSubmit 훅 |
 | `tools/pre-commit` | 금지어 검사 훅. `ln -s ../../tools/pre-commit .git/hooks/pre-commit` |
+| `settings.env.example.json` | settings.json에 넣을 환경변수 예시 |
 
 ## 설치
 
@@ -20,7 +21,9 @@ ln -s ../../tools/pre-commit ~/.claude/.git/hooks/pre-commit
 
 ## 환경변수
 
-`~/.claude/settings.json`의 `env`에 둔다. 이 파일은 저장소에 넣지 않는다.
+`~/.claude/settings.json`의 `env`에 둔다. 이 파일은 저장소에 넣지 않는다. 형식은 `settings.env.example.json`을 참고해 `env` 블록을 settings.json에 합친다. 빈 값은 쓰지 않는 변수이므로 지워도 된다.
+
+`.env` 파일을 따로 두지 않는 이유: Claude Code는 `~/.claude/.env`를 읽지 않는다. settings.json의 `env`는 Claude Code가 모든 명령과 훅에 자동으로 넣어 주므로, 스킬과 훅이 값을 읽으려고 파일을 따로 불러올 필요가 없다.
 
 | 변수 | 쓰는 곳 | 예 |
 | --- | --- | --- |
