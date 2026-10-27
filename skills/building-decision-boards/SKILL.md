@@ -63,5 +63,7 @@ description: Use when two or more decisions are waiting on the user (other sessi
 | 완료 버튼 댓글 본문만 보고 전달 | 댓글은 버튼을 누른 순간의 화면 내용이라 그 뒤 수정이 빠질 수 있음 | 전달 직전에 저장소를 다시 읽음 |
 | 갱신할 때 새 경로로 게시 | 대기함 URL이 둘이 됨 | 6단계: 같은 파일 또는 `url` |
 | 템플릿 예시 항목을 남김 | "예시:" 결정이 사용자에게 보임 | 2단계에서 예시 지우기 |
+| ITEMS를 스크립트로 통째로 갈아 끼우거나 항목 필드를 기억으로 씀 | `];` 뒤의 `var state`·`var draft` 선언까지 지워지거나(`state is not defined`), `more`·`label`이 빠지고 `mineText`가 선택지 안에 들어가 `.map` 오류로 화면이 빈다(2026-10-21 두 번 깨짐) | ITEMS 안쪽만 Edit으로 고치고 필드는 템플릿 예시를 그대로 따른다. 게시 전 `python3 -m http.server --directory <폴더>`로 띄워 headless 브라우저에서 pageerror가 0인지 확인한다 |
 | 저장할 때마다 알림이 온다고 가정 | 오지 않음 | 완료 버튼 댓글이나 사용자의 `<reply>`가 왔을 때 읽음 |
 | 스크립트로 ITEMS를 바꾸다 위치 계산이 어긋나 문법이 깨짐 | 페이지가 빈 대기함으로 보임(2026-10-19 v71) | 게시 전에 마지막 `<script>` 내용을 파일로 뽑아 `node --check`로 확인. 위치(index)를 구한 뒤 다른 치환을 먼저 하지 않음 |
+| 새 결정에 예전에 쓴 id(예: `deploy632`)를 다시 씀 | 저장소에 남은 옛 선택이 그 항목의 답으로 집계돼, 선택지와 맞지 않는 빈 답이 전달됨(2026-10-27) | 새 항목 id를 짓기 전에 `ArtifactData list collection="decisions"`로 이미 있는 id를 보고, 겹치면 날짜나 접미사를 붙임(`deploy632b`) |
