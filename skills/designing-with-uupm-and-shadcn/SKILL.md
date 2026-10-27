@@ -46,6 +46,17 @@ Pretendard는 Google Fonts에 없고, Artifact는 외부 스타일시트를 Goog
    같은 Artifact를 다시 발행할 때는 `files`를 빼도 이미 올린 글꼴이 유지됩니다. 다른 Artifact에 이미 올라간 글꼴을 복사하려면 `files`에 `{"artifact": "<그 URL>", "path": "fonts/PretendardVariable.woff2"}`를 넘깁니다.
 4. 로컬 미리보기도 페이지 옆에 `fonts/`가 있어야 같은 글꼴로 보입니다. snap Chromium은 `/tmp`를 못 읽으므로 `python3 -m http.server`로 띄워서 엽니다.
 
+## 한국어 줄바꿈
+
+브라우저는 기본값에서 한글을 글자 단위로 끊어서, "통과했습니" / "다"처럼 낱말 중간에서 줄이 바뀝니다. 모든 페이지의 `body`에 아래 두 줄을 넣습니다.
+
+```css
+body { word-break: keep-all; overflow-wrap: anywhere; }  /* 한글은 어절 단위로, 긴 URL·코드만 강제로 끊음 */
+p, li { text-wrap: pretty; }                            /* 마지막 줄에 한 어절만 남는 것을 줄임 */
+```
+
+글 폭을 `ch`로 정하지 않습니다. `ch`는 숫자 0의 폭이라 한글은 그 두 배쯤 차지해서, `max-width: 68ch`면 카드 폭의 절반쯤에서 줄이 바뀝니다. 읽기 폭은 `em`(본문 18px 기준 `40em` 안팎)이나 px로 정합니다.
+
 ## 도식과 인포그래픽
 
 내용에 아래 구조가 있으면 글 대신 도식 하나로 보여 줍니다. 구조가 없으면 그리지 않습니다. 꾸밈용 일러스트, 아이콘 나열, 의미 없는 배경 그래픽은 넣지 않습니다.
@@ -79,4 +90,5 @@ Pretendard는 Google Fonts에 없고, Artifact는 외부 스타일시트를 Goog
 | shadcn 스킬이 권하는 새 컴포넌트(Field, Empty, Spinner, sonner 등)를 제품에 바로 추가함 | 설치된 컴포넌트를 먼저 확인하고, 추가는 계획서에 적은 뒤에 합니다 |
 | 본문 글꼴을 Google Fonts나 jsDelivr CSS 링크로 불러옴 | Pretendard woff2를 `files`로 함께 발행하고 `@font-face`로 읽습니다 |
 | 발행할 때 `files`에 글꼴을 빠뜨림 | 첫 발행에는 반드시 넘깁니다. 빠지면 기본 글꼴로 조용히 바뀝니다 |
+| `word-break: keep-all` 없이 발행하거나 글 폭을 `ch`로 정함 | 낱말 중간에서 줄이 바뀌고 문단이 카드 폭보다 일찍 끊긴다는 지적(2026-10-27 Terra 점검 페이지). "한국어 줄바꿈" 절을 따릅니다 |
 | `npx shadcn@latest info`를 저장소 루트에서 실행함 | `components.json`이 있는 디렉터리(이 저장소는 `client/`)에서 실행합니다 |
