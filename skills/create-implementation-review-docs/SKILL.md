@@ -29,7 +29,7 @@ description: Use when the user wants Confluence review documents generated from 
 | --- | --- |
 | 구현 계획서 또는 설계 문서 경로 | 주 근거. 없으면 diff·커밋 범위 |
 | 부모 페이지 URL 또는 ID | 하위 문서를 붙일 자리 |
-| 이슈 키 | 문서 제목 접두어 (`XQ-388 시퀀스`) |
+| 이슈 키 | 문서 제목 접두어 (`PROJ-388 시퀀스`) |
 | 참고할 기존 문서군 | 형식을 맞출 대상이 따로 있으면 |
 
 **설계 문서가 있으면 그것을 우선 근거로 쓴다.** 계획서는 실행 지시라 "왜"가 얇다. 설계 문서에 기각한 대안·판단 근거가 있으면 그쪽을 옮긴다.
@@ -279,7 +279,7 @@ sequenceDiagram
 
 - **mermaid 가 있는 문서는 `contentFormat: "html"`** — `<pre><code class="language-mermaid">` 로 써야 렌더된다. 위 "Mermaid" 절 참조
 - mermaid 가 없는 문서는 `contentFormat: "markdown"` 이 간단하다
-- 제목은 `<이슈키> <문서명>` 형식. 예: `XQ-388 시퀀스`
+- 제목은 `<이슈키> <문서명>` 형식. 예: `PROJ-388 시퀀스`
 - 게시 후 응답의 `body.storage.value` 에서 mermaid 가 `language-mermaid` 로 들어갔는지 확인한다
 
 ### 5. 부모의 "문서 구성" 절에 링크 확인

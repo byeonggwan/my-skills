@@ -86,7 +86,7 @@ if [ -z "$label" ] && [ -n "$site" ] && [ -r "$auth_file" ]; then
   summary=$(curl -s -m 2 -u "$(head -1 "$auth_file")" "$site/rest/api/3/issue/$key?fields=summary" 2>/dev/null \
     | jq -r '.fields.summary // empty' 2>/dev/null)
   if [ -n "$summary" ]; then
-    # 앞의 [AI CHAT] 같은 말머리를 떼고 18자로 자른다.
+    # 앞의 [제품명] 같은 말머리를 떼고 18자로 자른다.
     label=$(printf '%s' "$summary" | sed -E 's/^(\[[^]]*\][[:space:]]*)+//; s/[[:space:]]+/ /g; s/^ //; s/ $//')
     label=$(LC_ALL=C.UTF-8 python3 -c "import sys;s=sys.argv[1];print(s if len(s)<=18 else s[:18]+\"…\")" "$label")
     printf '%s\t%s\n' "$key" "$label" >> "$cache_file" 2>/dev/null
