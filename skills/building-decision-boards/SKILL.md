@@ -26,12 +26,13 @@ description: Use when two or more decisions are waiting on the user (other sessi
 
 ## 순서
 
+0. **이 프로젝트의 대기함 찾기.** 대기함은 프로젝트마다 하나입니다. 프로젝트 메모리 `coordinator-appendix`의 "프로젝트 페이지" 항목에 결정 대기함 URL이 있으면 그 대기함을 6단계로 갱신합니다. 항목이 없으면 `Artifact list`에서 제목에 프로젝트 이름이 든 대기함을 찾아 확인한 뒤 URL을 그 항목에 적습니다. 그래도 없을 때만 3단계로 새로 만들고, 게시 결과의 URL을 그 항목에 적습니다. 개인 Artifact URL이므로 저장소 문서나 이 스킬에는 적지 않습니다.
 1. **질문 원문 확인.** 기억이나 요약으로 쓰지 않습니다. 결정을 기다리는 세션의 마지막 답변을 transcript에서 읽습니다.
    - 위치: `~/.claude/projects/<작업 디렉터리의 / 를 - 로 바꾼 이름>/` 안에서 가장 최근 `.jsonl`. 워크트리 세션이면 워크트리 경로 기준 디렉터리입니다.
    - 큰 파일이므로 python으로 마지막 `type == "assistant"`의 text 블록만 뽑습니다. `isSidechain`이 참인 줄은 건너뜁니다. 그 뒤에 사용자 메시지가 없어야 아직 답을 기다리는 상태입니다.
    - 서브에이전트라면 그 결과 전문을 봅니다.
    - 선택지, 근거, 트레이드오프를 원문에서 옮깁니다. 원문에 없는 안(예: Codex 안)은 지어내지 않고 그 카드를 뺍니다.
-2. **ITEMS 채우기.** 템플릿의 예시 항목은 지우고 실제 결정으로 바꿉니다. `<title>`, BOARD.title, BOARD.subtitle도 바꿉니다.
+2. **ITEMS 채우기.** 템플릿의 예시 항목은 지우고 실제 결정으로 바꿉니다. `<title>`, BOARD.title, BOARD.subtitle도 바꿉니다. 제목에는 프로젝트 이름을 붙입니다(예: `결정 대기함 · <프로젝트 키>`).
    - 결정 하나가 항목 하나입니다. 한 메시지에 질문이 둘이고 따로 고를 수 있으면 항목을 나눕니다. 둘째 질문이 첫째 답을 전제로 하면(예: "계획을 승인한다면 실행 방식은?") 한 항목으로 묶고, 맥락에 "모든 안이 앞 질문의 승인을 뜻한다, 아니면 '다른 의견'"이라고 적습니다.
    - `id`와 `options[].key`는 영문·숫자입니다. `id`는 저장소 문서 id가 됩니다.
    - `short`에는 이슈 번호만 쓰지 않고 무슨 일인지 씁니다.
@@ -48,7 +49,7 @@ description: Use when two or more decisions are waiting on the user (other sessi
 5. **완료 버튼 댓글(`[Artifact comment sent to Claude]`, 첫 줄이 "<reply>")이 오거나 사용자가 "<reply>"라고 하면** 댓글 본문은 참고만 하고, 반드시 `ArtifactData list collection="decisions"`를 읽고 **지금 ITEMS에 있는 id만** 봅니다. 문서마다 `choice`, `note`, `savedAt`이 있습니다. 결정을 기다리던 쪽에 고른 안과 메모를 그대로 보냅니다. `choice`가 `other`이거나 메모에 질문이 있으면 그 건만 사용자에게 먼저 확인합니다. 전달한 결정은 다음 갱신 때 ITEMS에서 뺍니다. 댓글로 왔으면 그 스레드에 "무엇을 어느 세션에 전달했는지"를 `ArtifactComments reply`로 짧게 답하고 `resolve`합니다. 사용자에게 확인할 건이 남았으면 resolve하지 않고 대화창에서 묻습니다.
 6. **이미 있는 대기함 갱신.** 새 페이지를 만들지 않고 같은 URL을 씁니다.
    - 이 대화에서 게시한 파일이면 같은 `file_path`로 다시 게시합니다.
-   - 다른 대화에서 만든 대기함이면 `Artifact list`로 URL을 찾고 `Artifact read`로 읽은 뒤, 그 내용을 고쳐 `url`을 넘겨 게시합니다.
+   - 다른 대화에서 만든 대기함이면 0단계에서 찾은 URL을 `Artifact read`로 읽은 뒤, 그 내용을 고쳐 `url`을 넘겨 게시합니다.
    - 다시 게시할 때는 `icon`과 `capabilities`를 **넘기지 않습니다**. 빼면 기존 값이 유지됩니다. 예외: `comments` 없이 만든 옛 대기함이면 한 번만 `{"db": {}, "user": {}, "comments": {}}`를 전부 다시 적어 넘깁니다(일부만 적으면 빠진 기능이 꺼집니다).
    - 저장소 정리: 같은 질문이 그대로 남아 있으면 같은 `id`를 써서 이미 고른 선택을 살립니다. 질문이 바뀌었으면 새 `id`(예: `618b`)를 씁니다. 이미 전달한 결정의 문서는 남아 있어도 ITEMS에 없으면 화면에 나오지 않습니다.
 
@@ -62,6 +63,7 @@ description: Use when two or more decisions are waiting on the user (other sessi
 | `capabilities` 없이 처음 게시 | 선택이 사용자 브라우저에만 남아 내가 읽지 못함 | 처음 게시 때 `{"db": {}, "user": {}, "comments": {}}` |
 | 완료 버튼 댓글 본문만 보고 전달 | 댓글은 버튼을 누른 순간의 화면 내용이라 그 뒤 수정이 빠질 수 있음 | 전달 직전에 저장소를 다시 읽음 |
 | 갱신할 때 새 경로로 게시 | 대기함 URL이 둘이 됨 | 6단계: 같은 파일 또는 `url` |
+| 제목이 그냥 "결정 대기함"이라 다른 프로젝트 대기함과 섞임 | 새 세션이 엉뚱한 대기함에 올림 | 0단계: 부록의 URL을 쓰고 제목에 프로젝트 이름 |
 | 템플릿 예시 항목을 남김 | "예시:" 결정이 사용자에게 보임 | 2단계에서 예시 지우기 |
 | ITEMS를 스크립트로 통째로 갈아 끼우거나 항목 필드를 기억으로 씀 | `];` 뒤의 `var state`·`var draft` 선언까지 지워지거나(`state is not defined`), `more`·`label`이 빠지고 `mineText`가 선택지 안에 들어가 `.map` 오류로 화면이 빈다(2026-10-21 두 번 깨짐) | ITEMS 안쪽만 Edit으로 고치고 필드는 템플릿 예시를 그대로 따른다. 게시 전 `python3 -m http.server --directory <폴더>`로 띄워 headless 브라우저에서 pageerror가 0인지 확인한다 |
 | 저장할 때마다 알림이 온다고 가정 | 오지 않음 | 완료 버튼 댓글이나 사용자의 `<reply>`가 왔을 때 읽음 |
