@@ -25,14 +25,14 @@ description: Use when a Jira Cloud task needs the REST API directly — attachin
 | JQL 검색 | `python3 $J search 'project=KEY AND fixVersion="1.2.3"' --fields summary,status --limit 200` |
 | 이슈 필드 보기 | `python3 $J issue KEY-1 KEY-2 --fields summary,status,fixVersions` |
 | 가능한 전환 보기 | `python3 $J transitions KEY-1` — 열은 `id 전환이름 -> 도착상태` |
-| 상태 전환(여러 건) | `python3 $J transition 완료 KEY-1 KEY-2` — 전환 id, 전환 이름, 도착 상태 이름 모두 받습니다. 이미 그 상태면 건너뜁니다. 같은 이름의 전환이 둘 이상이면(예: 서로 다른 "백로그") 첫 번째를 고르므로 id로 넘깁니다 |
+| 상태 전환(여러 건) | `python3 $J transition '<상태 이름>' KEY-1 KEY-2` — 전환 id, 전환 이름, 도착 상태 이름 모두 받습니다. 이미 그 상태면 건너뜁니다. 같은 이름의 전환이 둘 이상이면 첫 번째를 고르므로 id로 넘깁니다 |
 | 댓글 달기(wiki 마크업) | `python3 $J comment KEY-1 --file body.txt` 또는 stdin |
 | 댓글 목록 | `python3 $J comments KEY-1` |
-| 스크린샷 붙이기(새 댓글) | `python3 $J attach KEY-1 a.png b.jpg --heading '화면 기록' --text-file body.txt` |
+| 스크린샷 붙이기(새 댓글) | `python3 $J attach KEY-1 a.png b.jpg --heading '스크린샷' --text-file body.txt` |
 | 기존 댓글 끝에 스크린샷 | `python3 $J attach KEY-1 a.png --comment-id 12345` — 원문을 `bak_12345.txt`로 남기고 붙입니다. 이미 붙어 있으면 `already` |
 | 마크업만 미리 보기 | `python3 $J attach KEY-1 a.png --dry-run` — 넘긴 파일만 대상입니다. `dir/*`처럼 넘기면 텍스트 파일까지 들어가니 이미지만 고릅니다 |
 | 버전 만들기·연결 | `python3 $J version KEY 1.2.3 --description '...' --issues KEY-1 KEY-2` — `--description`·`--issues`는 생략할 수 있습니다. 있으면 그대로 쓰고, 이슈의 기존 fixVersions는 지우지 않고 더합니다 |
-| 버전 릴리스 표시 | `python3 $J release <version_id> 2026-11-05 --description '...'` |
+| 버전 릴리스 표시 | `python3 $J release <version_id> YYYY-MM-DD --description '...'` |
 | 그 밖의 요청 | `python3 $J raw GET /rest/agile/1.0/board/<id>/configuration` |
 
 `attach`는 끝에 `rendered img: N`을 찍습니다. 붙인 이미지 수와 다르면 렌더링이 깨진 것이니 댓글을 열어 확인합니다.
@@ -48,10 +48,10 @@ from jira_rest import req, call, unwrap, JiraError, search, transition, attach_i
 
 status, data = req("GET", "/rest/api/3/issue/KEY-1?fields=status")   # req(method, path, body=None, headers=None, raw=None)
 if status == 404: print("없음", data)                                # 오류 때 data는 Jira 오류 JSON(dict)이나 본문 문자열
-data = call("PUT", "/rest/api/3/issue/KEY-1", {"fields": {"labels": ["보류"]}})  # 2xx가 아니면 JiraError(.status, .data)
+data = call("PUT", "/rest/api/3/issue/KEY-1", {"fields": {"labels": ["on-hold"]}})  # 2xx가 아니면 JiraError(.status, .data)
 
-for i in search('project=KEY AND status="(5-3)테스트 완료"', ["summary"]):
-    print(transition(i["key"], "완료"))
+for i in search('project=KEY AND status="<상태 A>"', ["summary"]):
+    print(transition(i["key"], "<상태 B>"))
 v, created = ensure_version("KEY", "1.2.4", "수정 버전")
 ```
 
